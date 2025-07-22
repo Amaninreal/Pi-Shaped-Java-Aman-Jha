@@ -10,7 +10,7 @@ It includes patterns such as **Retry**, **TimeLimiter**, **Bulkhead**, and **Fal
 
 ## Project Structure
 
-    ```bash
+```bash
     ├── src/
     │   ├── main/
     │   │   ├── java/
@@ -25,7 +25,7 @@ It includes patterns such as **Retry**, **TimeLimiter**, **Bulkhead**, and **Fal
     │   │   │                   │   └── PaymentController.java
     │   │   │                   └── services/
     │   │   │                       └── PaymentService.java
-    ```
+```
 ---
 
 ## Objective
