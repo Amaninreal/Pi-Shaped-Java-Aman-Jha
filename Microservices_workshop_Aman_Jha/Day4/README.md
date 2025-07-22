@@ -89,9 +89,9 @@ wait
 ## Fallback Message
 
 If any resilience pattern is triggered:
-    ```bash
-    ❌ Payment service is currently unavailable. Please try again later.
-    ```
+```bash
+Payment service is currently unavailable. Please try again later.
+```
 ---
 ## Resilience4j Configuration (application.yml)
 ```yaml
