@@ -1,4 +1,4 @@
-# Microservices Resilience with Resilience4j
+# Microservices Resilience with Resilience4j - Day 4
 
 **Author:** Aman Jha  
 **Tech Stack:** Spring Boot, Resilience4j, Spring Web, Spring Actuator
