@@ -10,18 +10,22 @@ It includes patterns such as **Retry**, **TimeLimiter**, **Bulkhead**, and **Fal
 
 ## Project Structure
 
-resilience4j-demo/
-├── src/
-│ └── main/
-│ ├── java/com/example/payment/
-│ │ ├── PaymentController.java
-│ │ ├── PaymentService.java
-│ │ └── Resilience4jDemoApplication.java
-│ └── resources/
-│ └── application.yml
-└── README.md
-
-
+    ```bash
+    ├── src/
+    │   ├── main/
+    │   │   ├── java/
+    │   │   │   └── com/
+    │   │   │       └── pishaped/
+    │   │   │           └── circuit/
+    │   │   │               └── breaker/
+    │   │   │                   ├── CircuitBreakerApplication.java
+    │   │   │                   ├── config/
+    │   │   │                   │   └── ExecutorConfig.java
+    │   │   │                   ├── controlllers/
+    │   │   │                   │   └── PaymentController.java
+    │   │   │                   └── services/
+    │   │   │                       └── PaymentService.java
+    ```
 ---
 
 ## Objective
@@ -81,14 +85,14 @@ for i in {1..10}; do
 done
 wait
 ```
-
+---
 ## Fallback Message
 
 If any resilience pattern is triggered:
     ```bash
     ❌ Payment service is currently unavailable. Please try again later.
     ```
-
+---
 ## Resilience4j Configuration (application.yml)
 ```yaml
 resilience4j:
@@ -115,14 +119,14 @@ management:
       exposure:
         include: health,info,metrics
 ```
-
+---
 ## Monitoring with Actuator
 
 Access actuator metrics:
 ```bash
 http://localhost:8080/actuator/metrics
 ```
-
+---
 ## Key metrics:
 
 - resilience4j.retry.calls
@@ -130,16 +134,18 @@ http://localhost:8080/actuator/metrics
 - resilience4j.timelimiter.calls
 
 - resilience4j.bulkhead.available.concurrent.calls
-
-## Test Scenarios
-Test	URL	Expected Result
-Retry test	/payment/process?fail=true	Retries 3 times, then fallback triggered
-Timeout test	/payment/process?delay=true	Fails due to delay > 1s timeout
-Bulkhead test	10 parallel calls using shell loop	Some succeed, others fallback due to limit
-Success test	/payment/process	✅ Payment processed successfully!
-
 ---
 
+## Test Scenarios
+
+| Test            | URL                                  | Expected Result                                     |
+|-----------------|--------------------------------------|-----------------------------------------------------|
+| Retry test      | `/payment/process?fail=true`         | Retries 3 times, then fallback triggered            |
+| Timeout test    | `/payment/process?delay=true`        | Fails due to delay > 1s timeout                     |
+| Bulkhead test   | 10 parallel calls using shell loop   | Some succeed, others fallback due to limit          |
+| Success test    | `/payment/process`                   | ✅ Payment processed successfully!                   |
+
+---
 ## Run the App
 ```bash
 mvn spring-boot:run
