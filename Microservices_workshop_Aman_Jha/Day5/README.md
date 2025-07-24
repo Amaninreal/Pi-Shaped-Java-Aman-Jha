@@ -16,6 +16,150 @@ This project sets up an **observability stack** for microservices using Docker C
 
 ---
 
+## Core Observability Concepts
+
+Understanding observability in microservices requires clear distinction between metrics, logs, and traces, and how tools like **Micrometer**, **Sleuth**, **Zipkin**, **Kibana**, and **Grafana** help you track and debug distributed systems. Below are core questions with practical insights and real-world use cases.
+
+---
+
+### 🔹 What are the differences between metrics, logs, and traces?
+
+| Type     | Purpose                                    | Granularity      | Example |
+|----------|--------------------------------------------|------------------|---------|
+| Metrics  | Numerical measurements over time           | System-level     | CPU usage, request latency, GC time |
+| Logs     | Time-stamped textual events                | Event-level      | “User login failed: 401 Unauthorized” |
+| Traces   | End-to-end request lifecycle across services| Request-level    | Trace of an API call from gateway → auth → DB service |
+
+**Use Case:**  
+- Metrics help with **alerting** (e.g., high memory usage).
+- Logs help with **debugging** ("Why did this transaction fail?").
+- Traces help with **performance bottleneck analysis** (which microservice is slow?).
+
+---
+
+### 🔹 What’s the role of Micrometer and how does it enable backend-agnostic metrics?
+
+**Micrometer** is a facade that decouples metric instrumentation from the monitoring backend. You write metrics once using Micrometer, and export to **Prometheus**, **Datadog**, **New Relic**, or **Graphite**, by simply changing the dependency.
+
+**Use Case:**  
+If your service runs in multiple environments (local: Prometheus, production: Datadog), you don’t rewrite instrumentation code. Just change `MicrometerRegistry`.
+
+---
+
+### 🔹 How do `traceId` and `spanId` travel across microservice boundaries?
+
+They are propagated through **HTTP headers** (usually `X-B3-TraceId`, `X-B3-SpanId`, etc.) injected by Sleuth or OpenTelemetry.
+
+**Use Case:**  
+A frontend request generates `traceId=abc123`. As the request flows from API Gateway → Auth Service → Payment Service, all services log and tag events with this `traceId`, enabling full request tracing in Zipkin/Grafana Tempo.
+
+---
+
+### 🔹 How does Sleuth propagate context in WebClient/RestTemplate?
+
+Spring Cloud Sleuth automatically **injects and extracts tracing headers** in:
+
+- `RestTemplate` via `RestTemplateCustomizer`
+- `WebClient` via `ExchangeFilterFunction`
+
+**Use Case:**  
+When Service A calls Service B via `WebClient`, Sleuth ensures the trace continues by passing `traceId` in headers, enabling consistent distributed tracing without manual coding.
+
+---
+
+### 🔹 What is the difference between `Timer`, `Gauge`, and `Counter` in Micrometer?
+
+| Type    | Purpose                          | Mutable? | Example |
+|---------|----------------------------------|----------|---------|
+| Timer   | Measures duration + rate         | ✅        | `@Timed` on method to track execution time |
+| Gauge   | Instantaneous measurement        | ✅        | Current thread count in pool |
+| Counter | Monotonically increasing value   | ❌        | Number of logins, API hits |
+
+**Use Case:**
+- Use `Timer` to monitor method execution (e.g., `processPayment()` time).
+- Use `Gauge` for real-time pool size monitoring.
+- Use `Counter` to track rate of failed logins over time.
+
+---
+
+### 🔹 What is MDC and how does it help with log correlation?
+
+**MDC (Mapped Diagnostic Context)** stores per-thread context like `traceId`, `userId`, etc., to be automatically included in log patterns.
+
+**Use Case:**
+```java
+MDC.put("traceId", traceId);
+log.info("Order failed");
+```
+
+**Log Output:**
+```java
+INFO [traceId=abc123] Order failed
+```
+
+### 🔹 What is the difference between structured vs unstructured logging?
+
+| Type         | Format     | Searchable? | Example                                                   |
+|--------------|------------|-------------|-----------------------------------------------------------|
+| Structured   | JSON       | ✅           | `{ "level": "INFO", "user": "Aman", "action": "login" }` |
+| Unstructured | Plain text | ❌ (harder) | `"User Aman logged in successfully"`                      |
+
+**Use Case:**  
+Structured logs allow **Kibana queries** like:
+
+---
+
+---
+
+### 🔹 How do you use Kibana to search for logs tied to a specific `traceId`?
+
+1. Ensure logs are indexed with `traceId` (via MDC or Sleuth).
+2. In Kibana Discover tab, search:
+```java
+traceId:"abc123"
+```
+
+3. Visualize logs from all microservices involved in that trace.
+
+**Use Case:**  
+Quickly identify if a user request failed in Gateway, Auth, or DB layer without hopping across multiple logs.
+
+---
+
+### 🔹 How can you monitor memory, DB pool, and request error rates in Grafana?
+
+- **Memory:**  
+Use `jvm.memory.used` from Micrometer + Prometheus.
+
+- **DB Pool:**  
+Expose HikariCP metrics like `hikaricp.connections.active`.
+
+- **Request Error Rate:**  
+- Use counters for: http.server.requests{status="5xx"}
+
+
+**Use Case:**  
+Alert if:
+- Memory usage > 80%
+- DB pool exceeds max size
+- Error rate > 2% over 5 mins
+
+---
+
+### 🔹 How does sampling affect Zipkin trace accuracy and performance?
+
+Sampling controls the % of requests that get traced (e.g., 10%).
+
+| Benefit                  | Risk                  |
+|--------------------------|------------------------|
+| Less performance overhead| May miss key traces    |
+| Good for high TPS systems| Incomplete visibility  |
+
+**Use Case:**  
+For production systems with 10,000 RPS, tracing only 10% keeps Zipkin performant while still offering insight into bottlenecks. But for debugging incidents, increase sample rate temporarily to 100%.
+
+---
+
 ## 🐳 Docker Services
 
 | Service       | Port  | Description                     |
