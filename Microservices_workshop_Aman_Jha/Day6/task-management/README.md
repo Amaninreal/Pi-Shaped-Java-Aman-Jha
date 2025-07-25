@@ -1,4 +1,4 @@
-# Task Management System
+# Spring Boot Security: Form Login + JWT + Role-Based Access - Aman Jha
 
 A **Task Management System** built using **Spring Boot** that allows users to manage tasks efficiently with features like task creation, updates, deletion, and filtering by status, priority, and project.
 
@@ -170,3 +170,108 @@ PATCH /users/5/activate?status=true
     }
 }
 ```
+---
+## Core Security Concepts with Use Cases
+
+---
+
+### What is the difference between authentication and authorization?
+
+- **Authentication**: Verifies *who* the user is.
+- **Authorization**: Determines *what* the user is allowed to do.
+
+**Use Case**:  
+A user logs into a banking portal (authentication). After login, they can check their balance but cannot approve loans (authorization).
+
+---
+
+### How does Spring Security handle the authentication flow for form login?
+
+- Intercepts `/login` requests with `UsernamePasswordAuthenticationFilter`.
+- Validates credentials using an `AuthenticationManager`.
+- Stores authenticated details in `SecurityContextHolder`.
+
+**Use Case**:  
+Employees log in to an HR portal via a login form. Based on their roles, they can view payslips or manage payroll.
+
+---
+
+### How is a stateless JWT flow different from session-based authentication?
+
+- **Session-based**: Server maintains session state for each user.
+- **JWT-based**: No server state; JWT token contains user identity and is sent in each request.
+
+**Use Case**:  
+A mobile app uses JWT tokens for every API call. The server doesn’t store sessions, making the app scalable and stateless.
+
+---
+
+### How do filters in Spring Security get executed and ordered?
+
+- Spring uses a **filter chain** where each filter executes in a defined sequence.
+- Custom filters like `JwtAuthenticationFilter` are registered before/after standard filters.
+
+**Use Case**:  
+A JWT filter runs before `UsernamePasswordAuthenticationFilter` to intercept API requests and extract tokens from headers.
+
+---
+
+### What role does the `SecurityContextHolder` play?
+
+- Stores the current `Authentication` object for the request thread.
+- Allows access to user identity and roles throughout the application.
+
+**Use Case**:  
+After login, business services access the authenticated user from `SecurityContextHolder` to log actions or apply role-based rules.
+
+---
+
+### Why should CSRF be disabled for JWT-based APIs?
+
+- CSRF protection targets cookie-based sessions.
+- JWT is passed in headers (not automatically by the browser), making CSRF irrelevant.
+
+**Use Case**:  
+A frontend sends JWT in `Authorization` header. Since headers can’t be forged in cross-site requests, CSRF isn’t needed.
+
+---
+
+### What is MDC and how does it help with audit/log tracing?
+
+- MDC (Mapped Diagnostic Context) allows adding contextual data (like `traceId`, `username`) to logs.
+- Helps correlate logs for a single request across services.
+
+**Use Case**:  
+A request to `/api/user` logs the `traceId` and `username`, making it easy to debug issues and trace user actions across services.
+
+---
+
+### What are the security risks of not validating a JWT token signature?
+
+- JWTs can be tampered with if the signature is not verified.
+- Attackers can forge tokens to impersonate users or gain elevated privileges.
+
+**Use Case**:  
+If someone modifies the JWT payload to add `ROLE_ADMIN` and the server doesn’t validate the signature, they could access sensitive endpoints.
+
+---
+
+### How can you revoke or expire JWTs?
+
+- Use short expiration times.
+- Revoke tokens using blacklists or by rotating the signing secret.
+
+**Use Case**:  
+If a user logs out or is deactivated, their JWT can still be used unless it’s expired or blacklisted.
+
+---
+
+### What is the purpose of enabling or customizing CORS?
+
+- CORS allows or restricts browser-based requests from different origins.
+- Necessary for enabling frontend-backend communication in modern web apps.
+
+**Use Case**:  
+Your frontend app on `http://localhost:3000` calls the backend on `http://localhost:8080`. CORS needs to be enabled to allow this communication.
+
+---
